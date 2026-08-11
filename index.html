@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>PDF Tutor</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-title">PDF Tutor</span>
+        <span class="brand-subtitle">Learn from your documents</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+
+    <!-- LEFT COLUMN: PDF -->
+    <section class="pdf-column">
+
+      <!-- Upload -->
+      <div class="card" id="uploadCard">
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-icon">📄</div>
+          <h2 class="card-title">Upload your PDF</h2>
+          <p class="card-desc">Upload a document and ask questions about its content.</p>
+          <label class="btn btn-primary" for="pdfInput">Choose PDF</label>
+          <input type="file" id="pdfInput" accept="application/pdf" hidden />
+        </div>
+
+        <div class="file-info" id="fileInfo" hidden>
+          <div class="file-info-row">
+            <span class="file-name" id="fileName"></span>
+            <span class="file-size" id="fileSize"></span>
+          </div>
+          <div class="file-status" id="fileStatus"></div>
+          <button class="btn btn-secondary btn-small" id="removePdfBtn">Remove PDF</button>
+        </div>
+      </div>
+
+      <!-- Document reader -->
+      <div class="card reader-card">
+        <h2 class="card-title">Document</h2>
+        <div class="reader-box" id="readerBox">
+          <p class="placeholder-text">Upload a PDF to see its extracted text here.</p>
+        </div>
+        <div class="selection-actions" id="selectionActions" hidden>
+          <button class="btn btn-secondary btn-small" id="explainSelectionBtn">Explain selected text</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: AI -->
+    <section class="ai-column">
+
+      <!-- Ask about PDF -->
+      <div class="card">
+        <h2 class="card-title">Ask about this PDF</h2>
+        <p class="card-desc">Ask a question about the content of your uploaded document.</p>
+        <textarea id="questionInput" class="text-input" rows="3" placeholder="Ask something about this PDF..."></textarea>
+        <button class="btn btn-primary" id="askBtn">Ask</button>
+        <div class="status-text" id="askStatus"></div>
+        <div class="answer-box" id="answerBox" hidden></div>
+      </div>
+
+      <!-- Explain difficult line -->
+      <div class="card" id="explainCard">
+        <h2 class="card-title">Explain a difficult line</h2>
+        <p class="card-desc">Paste a sentence from your PDF and get a simple explanation.</p>
+        <textarea id="explainInput" class="text-input" rows="3" placeholder="Paste a confusing sentence here..."></textarea>
+        <button class="btn btn-primary" id="explainBtn">Explain</button>
+        <div class="status-text" id="explainStatus"></div>
+        <div class="answer-box" id="explanationBox" hidden></div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
