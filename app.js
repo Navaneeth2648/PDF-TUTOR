@@ -1,125 +1,105 @@
 /* ============================================================
    PDF TUTOR
-   Frontend application logic
+   PDF VIEWER + AI
    ============================================================ */
-
-
-/* =========================
-   PDF.JS
-========================= */
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 
-/* =========================
-   APPLICATION STATE
-========================= */
+/* ============================================================
+   STATE
+   ============================================================ */
 
 const state = {
   fileName: null,
   fileSize: null,
   pdfText: "",
   chunks: [],
-  isProcessingPdf: false,
+  pdfUrl: null,
   isAsking: false,
   isExplaining: false
 };
 
 
-/* =========================
-   ELEMENT REFERENCES
-========================= */
+/* ============================================================
+   ELEMENTS
+   ============================================================ */
 
 const pdfInput = document.getElementById("pdfInput");
-
 const uploadArea = document.getElementById("uploadArea");
-
 const fileInfo = document.getElementById("fileInfo");
-
 const fileNameEl = document.getElementById("fileName");
-
 const fileSizeEl = document.getElementById("fileSize");
-
 const fileStatusEl = document.getElementById("fileStatus");
-
 const removePdfBtn = document.getElementById("removePdfBtn");
 
 const readerBox = document.getElementById("readerBox");
-
 const selectionActions =
   document.getElementById("selectionActions");
-
 const explainSelectionBtn =
   document.getElementById("explainSelectionBtn");
 
 const questionInput =
   document.getElementById("questionInput");
-
 const askBtn =
   document.getElementById("askBtn");
-
 const askStatus =
   document.getElementById("askStatus");
-
 const answerBox =
   document.getElementById("answerBox");
 
 const explainInput =
   document.getElementById("explainInput");
-
 const explainBtn =
   document.getElementById("explainBtn");
-
 const explainStatus =
   document.getElementById("explainStatus");
-
 const explanationBox =
   document.getElementById("explanationBox");
 
 
-/* =========================
-   ADS UNIT BUTTONS
-========================= */
+/* ============================================================
+   UNIT BUTTONS
+   ============================================================ */
 
-const unitButtons =
-  document.querySelectorAll(".unit-card");
-
-
-unitButtons.forEach((button) => {
+document.querySelectorAll(".unit-card").forEach((button) => {
 
   button.addEventListener("click", async () => {
 
     const pdfPath = button.dataset.pdf;
+    const pdfName =
+      button.dataset.name || pdfPath;
 
-    const pdfName = button.dataset.name;
-
-    await loadDefaultPdf(pdfPath, pdfName);
+    await loadDefaultPdf(
+      pdfPath,
+      pdfName
+    );
 
   });
 
 });
 
 
-/* =========================
+/* ============================================================
    HELPERS
-========================= */
+   ============================================================ */
 
 function formatFileSize(bytes) {
 
   if (bytes < 1024) {
-    return bytes + " B";
+    return `${bytes} B`;
   }
 
   if (bytes < 1024 * 1024) {
-    return (bytes / 1024).toFixed(1) + " KB";
+    return `${(bytes / 1024).toFixed(1)} KB`;
   }
 
-  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 
-function setStatus(element, message, type) {
+function setStatus(element, message, type = "") {
 
   element.textContent = message || "";
 
@@ -131,7 +111,7 @@ function setStatus(element, message, type) {
 }
 
 
-function setFileStatus(message, type) {
+function setFileStatus(message, type = "") {
 
   fileStatusEl.textContent = message || "";
 
@@ -146,133 +126,15 @@ function setFileStatus(message, type) {
 }
 
 
-/* =========================
-   FORMAT AI RESPONSE
-========================= */
-
-function renderFormattedText(container, text) {
-
-  container.innerHTML = "";
-
-  const lines = text.split("\n");
-
-  let listEl = null;
-
-  let listType = null;
-
-
-  function closeList() {
-
-    if (listEl) {
-
-      container.appendChild(listEl);
-
-      listEl = null;
-
-      listType = null;
-    }
-
-  }
-
-
-  lines.forEach((rawLine) => {
-
-    const line = rawLine.trim();
-
-
-    if (line === "") {
-
-      closeList();
-
-      return;
-    }
-
-
-    const bulletMatch =
-      line.match(/^[-*]\s+(.*)/);
-
-
-    const numberMatch =
-      line.match(/^\d+[.)]\s+(.*)/);
-
-
-    if (bulletMatch) {
-
-      if (listType !== "ul") {
-
-        closeList();
-
-        listEl =
-          document.createElement("ul");
-
-        listType = "ul";
-      }
-
-
-      const li =
-        document.createElement("li");
-
-      li.textContent =
-        bulletMatch[1];
-
-      listEl.appendChild(li);
-
-    }
-
-
-    else if (numberMatch) {
-
-      if (listType !== "ol") {
-
-        closeList();
-
-        listEl =
-          document.createElement("ol");
-
-        listType = "ol";
-      }
-
-
-      const li =
-        document.createElement("li");
-
-      li.textContent =
-        numberMatch[1];
-
-      listEl.appendChild(li);
-
-    }
-
-
-    else {
-
-      closeList();
-
-      const p =
-        document.createElement("p");
-
-      p.textContent = line;
-
-      container.appendChild(p);
-    }
-
-  });
-
-
-  closeList();
-}
-
-
-/* =========================
-   CHUNK PDF TEXT
-========================= */
+/* ============================================================
+   CHUNK TEXT FOR AI
+   ============================================================ */
 
 function chunkText(text, size = 1500) {
 
   const chunks = [];
 
   let start = 0;
-
 
   while (start < text.length) {
 
@@ -282,7 +144,6 @@ function chunkText(text, size = 1500) {
         text.length
       );
 
-
     if (end < text.length) {
 
       const breakPoint =
@@ -291,36 +152,34 @@ function chunkText(text, size = 1500) {
           end
         );
 
-
       if (
         breakPoint >
         start + size * 0.5
       ) {
-
         end = breakPoint;
       }
 
     }
 
+    const chunk =
+      text
+        .slice(start, end)
+        .trim();
 
-    chunks.push(
-      text.slice(start, end).trim()
-    );
-
+    if (chunk) {
+      chunks.push(chunk);
+    }
 
     start = end;
   }
 
-
-  return chunks.filter(
-    (chunk) => chunk.length > 0
-  );
+  return chunks;
 }
 
 
-/* =========================
-   FIND RELEVANT PDF TEXT
-========================= */
+/* ============================================================
+   RELEVANT CONTEXT FOR AI
+   ============================================================ */
 
 function getRelevantContext(
   query,
@@ -331,13 +190,15 @@ function getRelevantContext(
     return "";
   }
 
-
-  if (state.pdfText.length <= maxChars) {
+  if (
+    state.pdfText.length <=
+    maxChars
+  ) {
     return state.pdfText;
   }
 
 
-  const queryWords =
+  const words =
     query
       .toLowerCase()
       .replace(
@@ -346,28 +207,24 @@ function getRelevantContext(
       )
       .split(/\s+/)
       .filter(
-        (word) => word.length > 2
+        word => word.length > 2
       );
 
 
   const scored =
-    state.chunks.map((chunk) => {
+    state.chunks.map(chunk => {
 
       const lower =
         chunk.toLowerCase();
 
       let score = 0;
 
+      words.forEach(word => {
 
-      queryWords.forEach((word) => {
-
-        const occurrences =
+        score +=
           lower.split(word).length - 1;
 
-        score += occurrences;
-
       });
-
 
       return {
         chunk,
@@ -378,7 +235,8 @@ function getRelevantContext(
 
 
   scored.sort(
-    (a, b) => b.score - a.score
+    (a, b) =>
+      b.score - a.score
   );
 
 
@@ -394,7 +252,6 @@ function getRelevantContext(
       break;
     }
 
-
     if (
       result.length +
       item.chunk.length >
@@ -403,13 +260,13 @@ function getRelevantContext(
       break;
     }
 
-
     result +=
-      item.chunk + "\n\n";
+      item.chunk +
+      "\n\n";
   }
 
 
-  if (result.trim().length === 0) {
+  if (!result.trim()) {
 
     result =
       state.pdfText.slice(
@@ -424,62 +281,564 @@ function getRelevantContext(
 }
 
 
-/* =========================
-   RESET PDF
-========================= */
+/* ============================================================
+   AI RESPONSE FORMATTER
+   ============================================================ */
 
-function resetPdfState() {
+function renderFormattedText(
+  container,
+  text
+) {
 
-  state.fileName = null;
+  container.innerHTML = "";
 
-  state.fileSize = null;
+  const lines =
+    text.split("\n");
 
-  state.pdfText = "";
-
-  state.chunks = [];
-
-
-  fileInfo.hidden = true;
-
-  uploadArea.hidden = false;
+  let list = null;
+  let listType = null;
 
 
-  pdfInput.value = "";
+  function closeList() {
 
+    if (list) {
+
+      container.appendChild(list);
+
+      list = null;
+      listType = null;
+
+    }
+
+  }
+
+
+  lines.forEach(rawLine => {
+
+    const line =
+      rawLine.trim();
+
+
+    if (!line) {
+
+      closeList();
+
+      return;
+
+    }
+
+
+    const bullet =
+      line.match(
+        /^[-*]\s+(.*)/
+      );
+
+
+    const numbered =
+      line.match(
+        /^\d+[.)]\s+(.*)/
+      );
+
+
+    if (bullet) {
+
+      if (listType !== "ul") {
+
+        closeList();
+
+        list =
+          document.createElement(
+            "ul"
+          );
+
+        listType = "ul";
+
+      }
+
+
+      const li =
+        document.createElement(
+          "li"
+        );
+
+      li.textContent =
+        bullet[1];
+
+      list.appendChild(li);
+
+    }
+
+    else if (numbered) {
+
+      if (listType !== "ol") {
+
+        closeList();
+
+        list =
+          document.createElement(
+            "ol"
+          );
+
+        listType = "ol";
+
+      }
+
+
+      const li =
+        document.createElement(
+          "li"
+        );
+
+      li.textContent =
+        numbered[1];
+
+      list.appendChild(li);
+
+    }
+
+    else {
+
+      closeList();
+
+      const p =
+        document.createElement(
+          "p"
+        );
+
+      p.textContent = line;
+
+      container.appendChild(p);
+
+    }
+
+  });
+
+
+  closeList();
+}
+
+
+/* ============================================================
+   CREATE PDF VIEWER
+   ============================================================ */
+
+function createPdfViewer() {
 
   readerBox.innerHTML = `
-    <div class="reader-placeholder">
-      <div class="placeholder-icon">📄</div>
-      <div>
-        Select an ADS unit above or upload a PDF.
+
+    <div class="pdf-viewer">
+
+      <div class="pdf-toolbar">
+
+        <button
+          type="button"
+          class="pdf-tool-btn"
+          id="pdfZoomOut"
+        >
+          −
+        </button>
+
+        <span
+          class="pdf-zoom-value"
+          id="pdfZoomValue"
+        >
+          100%
+        </span>
+
+        <button
+          type="button"
+          class="pdf-tool-btn"
+          id="pdfZoomIn"
+        >
+          +
+        </button>
+
+        <button
+          type="button"
+          class="pdf-tool-btn pdf-fit-btn"
+          id="pdfFitBtn"
+        >
+          Fit
+        </button>
+
+        <span
+          class="pdf-page-info"
+          id="pdfPageInfo"
+        >
+          Loading...
+        </span>
+
       </div>
+
+      <div
+        class="pdf-pages"
+        id="pdfPages"
+      ></div>
+
     </div>
+
   `;
 
 
-  selectionActions.hidden = true;
+  const zoomOut =
+    document.getElementById(
+      "pdfZoomOut"
+    );
 
-  answerBox.hidden = true;
+  const zoomIn =
+    document.getElementById(
+      "pdfZoomIn"
+    );
 
-  explanationBox.hidden = true;
+  const fit =
+    document.getElementById(
+      "pdfFitBtn"
+    );
 
 
-  setStatus(
-    askStatus,
-    ""
+  zoomOut.addEventListener(
+    "click",
+    () => {
+
+      if (
+        window.currentPdfViewer
+      ) {
+
+        window.currentPdfViewer.setZoom(
+          window.currentPdfViewer.zoom - 0.1
+        );
+
+      }
+
+    }
   );
 
-  setStatus(
-    explainStatus,
-    ""
+
+  zoomIn.addEventListener(
+    "click",
+    () => {
+
+      if (
+        window.currentPdfViewer
+      ) {
+
+        window.currentPdfViewer.setZoom(
+          window.currentPdfViewer.zoom + 0.1
+        );
+
+      }
+
+    }
+  );
+
+
+  fit.addEventListener(
+    "click",
+    () => {
+
+      if (
+        window.currentPdfViewer
+      ) {
+
+        window.currentPdfViewer.fitWidth();
+
+      }
+
+    }
   );
 
 }
 
 
 /* ============================================================
+   RENDER ACTUAL PDF PAGES
+   ============================================================ */
+
+async function renderPdfViewer(
+  arrayBuffer
+) {
+
+  createPdfViewer();
+
+
+  const pagesContainer =
+    document.getElementById(
+      "pdfPages"
+    );
+
+  const pageInfo =
+    document.getElementById(
+      "pdfPageInfo"
+    );
+
+
+  const loadingTask =
+    pdfjsLib.getDocument({
+      data: arrayBuffer
+    });
+
+
+  const pdf =
+    await loadingTask.promise;
+
+
+  const viewer = {
+
+    pdf,
+
+    zoom: 1,
+
+    setZoom(value) {
+
+      this.zoom =
+        Math.max(
+          0.6,
+          Math.min(
+            2.5,
+            value
+          )
+        );
+
+      this.renderAll();
+
+    },
+
+    fitWidth() {
+
+      const firstPage =
+        pagesContainer.querySelector(
+          ".pdf-page-wrapper"
+        );
+
+      if (!firstPage) {
+        return;
+      }
+
+      const availableWidth =
+        pagesContainer.clientWidth -
+        20;
+
+      const pageWidth =
+        firstPage
+          .querySelector("canvas")
+          ?.width || 600;
+
+      this.zoom =
+        Math.max(
+          0.6,
+          Math.min(
+            2.0,
+            availableWidth /
+            pageWidth
+          )
+        );
+
+      this.renderAll();
+
+    },
+
+    async renderAll() {
+
+      pagesContainer.innerHTML = "";
+
+      document.getElementById(
+        "pdfZoomValue"
+      ).textContent =
+        `${Math.round(this.zoom * 100)}%`;
+
+      pageInfo.textContent =
+        `${pdf.numPages} pages`;
+
+
+      for (
+        let pageNumber = 1;
+        pageNumber <= pdf.numPages;
+        pageNumber++
+      ) {
+
+        const page =
+          await pdf.getPage(
+            pageNumber
+          );
+
+
+        const baseViewport =
+          page.getViewport({
+            scale: 1
+          });
+
+
+        const viewport =
+          page.getViewport({
+            scale:
+              this.zoom
+          });
+
+
+        const wrapper =
+          document.createElement(
+            "div"
+          );
+
+        wrapper.className =
+          "pdf-page-wrapper";
+
+
+        const pageLabel =
+          document.createElement(
+            "div"
+          );
+
+        pageLabel.className =
+          "pdf-page-label";
+
+        pageLabel.textContent =
+          `Page ${pageNumber} of ${pdf.numPages}`;
+
+
+        const canvas =
+          document.createElement(
+            "canvas"
+          );
+
+
+        const context =
+          canvas.getContext(
+            "2d"
+          );
+
+
+        const outputScale =
+          window.devicePixelRatio ||
+          1;
+
+
+        canvas.width =
+          Math.floor(
+            viewport.width *
+            outputScale
+          );
+
+
+        canvas.height =
+          Math.floor(
+            viewport.height *
+            outputScale
+          );
+
+
+        canvas.style.width =
+          `${viewport.width}px`;
+
+        canvas.style.height =
+          `${viewport.height}px`;
+
+
+        context.setTransform(
+          outputScale,
+          0,
+          0,
+          outputScale,
+          0,
+          0
+        );
+
+
+        wrapper.appendChild(
+          pageLabel
+        );
+
+        wrapper.appendChild(
+          canvas
+        );
+
+        pagesContainer.appendChild(
+          wrapper
+        );
+
+
+        await page.render({
+          canvasContext:
+            context,
+
+          viewport
+        }).promise;
+
+      }
+
+    }
+
+  };
+
+
+  window.currentPdfViewer =
+    viewer;
+
+
+  await viewer.renderAll();
+
+}
+
+
+/* ============================================================
+   EXTRACT TEXT FROM PDF
+   ============================================================ */
+
+async function extractPdfText(
+  arrayBuffer
+) {
+
+  const loadingTask =
+    pdfjsLib.getDocument({
+      data: arrayBuffer
+    });
+
+
+  const pdf =
+    await loadingTask.promise;
+
+
+  let fullText = "";
+
+
+  for (
+    let pageNumber = 1;
+    pageNumber <= pdf.numPages;
+    pageNumber++
+  ) {
+
+    const page =
+      await pdf.getPage(
+        pageNumber
+      );
+
+
+    const content =
+      await page.getTextContent();
+
+
+    const pageText =
+      content.items
+        .map(
+          item => item.str
+        )
+        .join(" ");
+
+
+    fullText +=
+      pageText.trim() +
+      "\n\n";
+
+  }
+
+
+  return fullText.trim();
+}
+
+
+/* ============================================================
    LOAD DEFAULT ADS PDF
-============================================================ */
+   ============================================================ */
 
 async function loadDefaultPdf(
   pdfPath,
@@ -488,7 +847,10 @@ async function loadDefaultPdf(
 
   try {
 
-    state.fileName = pdfName;
+    uploadArea.hidden = true;
+
+    fileInfo.hidden = false;
+
 
     fileNameEl.textContent =
       pdfName;
@@ -497,35 +859,44 @@ async function loadDefaultPdf(
       "Loading...";
 
 
-    uploadArea.hidden = true;
-
-    fileInfo.hidden = false;
-
-
     setFileStatus(
-      "Loading PDF...",
-      null
+      "Opening PDF...",
+      ""
     );
 
 
     readerBox.innerHTML = `
+
       <div class="reader-placeholder">
-        <div class="placeholder-icon">⏳</div>
-        <div>
-          Loading ${pdfName}...
+
+        <div class="placeholder-icon">
+          ⏳
         </div>
+
+        <div>
+          Opening PDF...
+        </div>
+
       </div>
+
     `;
 
 
+    /*
+      Fetch the actual PDF from
+      your Render website.
+    */
+
     const response =
-      await fetch(pdfPath);
+      await fetch(
+        pdfPath
+      );
 
 
     if (!response.ok) {
 
       throw new Error(
-        "PDF file was not found on the server."
+        `Could not find ${pdfPath}`
       );
 
     }
@@ -535,33 +906,15 @@ async function loadDefaultPdf(
       await response.arrayBuffer();
 
 
-    const text =
-      await extractPdfTextFromBuffer(
-        arrayBuffer
-      );
-
-
-    if (
-      !text ||
-      text.trim().length === 0
-    ) {
-
-      throw new Error(
-        "No selectable text could be extracted from this PDF."
-      );
-
-    }
-
-
-    state.pdfText = text;
-
-    state.chunks =
-      chunkText(text);
-
+    state.fileName =
+      pdfName;
 
     state.fileSize =
       arrayBuffer.byteLength;
 
+
+    fileNameEl.textContent =
+      pdfName;
 
     fileSizeEl.textContent =
       formatFileSize(
@@ -569,119 +922,85 @@ async function loadDefaultPdf(
       );
 
 
-    readerBox.textContent =
-      text;
+    /*
+      1. Render actual PDF pages
+      2. Extract text separately
+      3. Keep text for AI
+    */
+
+    await renderPdfViewer(
+      arrayBuffer.slice(0)
+    );
+
+
+    state.pdfText =
+      await extractPdfText(
+        arrayBuffer.slice(0)
+      );
+
+
+    state.chunks =
+      chunkText(
+        state.pdfText
+      );
 
 
     setFileStatus(
-      "PDF loaded successfully.",
+      "PDF opened successfully.",
       "success"
     );
 
 
-    /* Scroll to document */
-
     document
-      .querySelector(".reader-card")
+      .querySelector(
+        ".reader-card"
+      )
       .scrollIntoView({
         behavior: "smooth",
         block: "start"
       });
 
-
   }
 
   catch (error) {
 
-    console.error(error);
-
-
-    setFileStatus(
-      "Could not load this PDF.",
-      "error"
+    console.error(
+      "PDF loading error:",
+      error
     );
-
-
-    readerBox.innerHTML = `
-      <div class="reader-placeholder">
-        <div class="placeholder-icon">⚠️</div>
-        <div>
-          Could not load this PDF.
-        </div>
-      </div>
-    `;
 
 
     state.pdfText = "";
 
     state.chunks = [];
 
-  }
 
-}
-
-
-/* ============================================================
-   EXTRACT PDF TEXT FROM BUFFER
-============================================================ */
-
-async function extractPdfTextFromBuffer(
-  arrayBuffer
-) {
-
-  state.isProcessingPdf = true;
+    setFileStatus(
+      "Could not open this PDF.",
+      "error"
+    );
 
 
-  try {
+    readerBox.innerHTML = `
 
-    const loadingTask =
-      pdfjsLib.getDocument({
-        data: arrayBuffer
-      });
+      <div class="reader-placeholder">
 
+        <div class="placeholder-icon">
+          ⚠️
+        </div>
 
-    const pdf =
-      await loadingTask.promise;
+        <div>
+          ${error.message}
+        </div>
 
+        <div style="font-size:0.8rem;margin-top:6px;">
+          Make sure the PDF is uploaded to the
+          same GitHub project and the filename is exact.
+        </div>
 
-    let fullText = "";
+      </div>
 
-
-    for (
-      let pageNum = 1;
-      pageNum <= pdf.numPages;
-      pageNum++
-    ) {
-
-      const page =
-        await pdf.getPage(pageNum);
-
-
-      const content =
-        await page.getTextContent();
-
-
-      const pageText =
-        content.items
-          .map(
-            (item) => item.str
-          )
-          .join(" ");
-
-
-      fullText +=
-        pageText.trim() +
-        "\n\n";
-    }
-
-
-    return fullText.trim();
-
-  }
-
-  finally {
-
-    state.isProcessingPdf = false;
+    `;
 
   }
 
@@ -689,8 +1008,8 @@ async function extractPdfTextFromBuffer(
 
 
 /* ============================================================
-   NORMAL USER PDF UPLOAD
-============================================================ */
+   NORMAL PDF UPLOAD
+   ============================================================ */
 
 pdfInput.addEventListener(
   "change",
@@ -711,7 +1030,7 @@ pdfInput.addEventListener(
     ) {
 
       setFileStatus(
-        "Please select a valid PDF file.",
+        "Please select a PDF file.",
         "error"
       );
 
@@ -719,89 +1038,54 @@ pdfInput.addEventListener(
     }
 
 
-    state.fileName =
-      file.name;
+    try {
 
-    state.fileSize =
-      file.size;
+      uploadArea.hidden = true;
 
-
-    uploadArea.hidden = true;
-
-    fileInfo.hidden = false;
+      fileInfo.hidden = false;
 
 
-    fileNameEl.textContent =
-      file.name;
+      fileNameEl.textContent =
+        file.name;
 
-    fileSizeEl.textContent =
-      formatFileSize(
-        file.size
+      fileSizeEl.textContent =
+        formatFileSize(
+          file.size
+        );
+
+
+      setFileStatus(
+        "Opening PDF...",
+        ""
       );
 
-
-    setFileStatus(
-      "Reading PDF...",
-      null
-    );
-
-
-    try {
 
       const arrayBuffer =
         await file.arrayBuffer();
 
 
-      const text =
-        await extractPdfTextFromBuffer(
-          arrayBuffer
-        );
-
-
-      if (
-        !text ||
-        text.trim().length === 0
-      ) {
-
-        setFileStatus(
-          "This PDF does not contain selectable text. OCR is not supported.",
-          "error"
-        );
-
-
-        readerBox.innerHTML = `
-          <div class="reader-placeholder">
-            <div class="placeholder-icon">⚠️</div>
-            <div>
-              No selectable text could be extracted.
-            </div>
-          </div>
-        `;
-
-
-        state.pdfText = "";
-
-        state.chunks = [];
-
-        return;
-      }
+      await renderPdfViewer(
+        arrayBuffer.slice(0)
+      );
 
 
       state.pdfText =
-        text;
+        await extractPdfText(
+          arrayBuffer.slice(0)
+        );
+
 
       state.chunks =
-        chunkText(text);
-
-
-      readerBox.textContent =
-        text;
+        chunkText(
+          state.pdfText
+        );
 
 
       setFileStatus(
-        "PDF processed successfully.",
+        "PDF opened successfully.",
         "success"
       );
+
 
     }
 
@@ -811,19 +1095,9 @@ pdfInput.addEventListener(
 
 
       setFileStatus(
-        "We couldn't read this PDF. Please try another file.",
+        "Could not open this PDF.",
         "error"
       );
-
-
-      readerBox.innerHTML = `
-        <div class="reader-placeholder">
-          <div class="placeholder-icon">⚠️</div>
-          <div>
-            We could not read this PDF.
-          </div>
-        </div>
-      `;
 
 
       state.pdfText = "";
@@ -838,13 +1112,62 @@ pdfInput.addEventListener(
 
 /* ============================================================
    REMOVE PDF
-============================================================ */
+   ============================================================ */
 
 removePdfBtn.addEventListener(
   "click",
   () => {
 
-    resetPdfState();
+    state.fileName = null;
+
+    state.fileSize = null;
+
+    state.pdfText = "";
+
+    state.chunks = [];
+
+
+    uploadArea.hidden = false;
+
+    fileInfo.hidden = true;
+
+
+    pdfInput.value = "";
+
+
+    readerBox.innerHTML = `
+
+      <div class="reader-placeholder">
+
+        <div class="placeholder-icon">
+          📄
+        </div>
+
+        <div>
+          Select an ADS unit above or upload a PDF.
+        </div>
+
+      </div>
+
+    `;
+
+
+    selectionActions.hidden = true;
+
+    answerBox.hidden = true;
+
+    explanationBox.hidden = true;
+
+
+    setStatus(
+      askStatus,
+      ""
+    );
+
+    setStatus(
+      explainStatus,
+      ""
+    );
 
   }
 );
@@ -852,52 +1175,32 @@ removePdfBtn.addEventListener(
 
 /* ============================================================
    TEXT SELECTION
-============================================================ */
+   ============================================================ */
 
 readerBox.addEventListener(
   "mouseup",
-  handleTextSelection
-);
+  () => {
+
+    const selected =
+      window
+        .getSelection()
+        .toString()
+        .trim();
 
 
-readerBox.addEventListener(
-  "touchend",
-  handleTextSelection
-);
+    if (selected) {
 
+      selectionActions.hidden =
+        false;
 
-function handleTextSelection() {
+      selectionActions.dataset.selectedText =
+        selected;
 
-  const selection =
-    window
-      .getSelection()
-      .toString()
-      .trim();
-
-
-  if (selection.length > 0) {
-
-    selectionActions.hidden =
-      false;
-
-    selectionActions.dataset.selectedText =
-      selection;
+    }
 
   }
+);
 
-  else {
-
-    selectionActions.hidden =
-      true;
-
-  }
-
-}
-
-
-/* ============================================================
-   EXPLAIN SELECTED TEXT
-============================================================ */
 
 explainSelectionBtn.addEventListener(
   "click",
@@ -925,8 +1228,8 @@ explainSelectionBtn.addEventListener(
 
 
 /* ============================================================
-   ASK ABOUT PDF
-============================================================ */
+   ASK AI
+   ============================================================ */
 
 askBtn.addEventListener(
   "click",
@@ -949,6 +1252,7 @@ async function handleAsk() {
     );
 
     return;
+
   }
 
 
@@ -961,6 +1265,7 @@ async function handleAsk() {
     );
 
     return;
+
   }
 
 
@@ -978,7 +1283,7 @@ async function handleAsk() {
   setStatus(
     askStatus,
     "Thinking...",
-    null
+    ""
   );
 
 
@@ -1017,7 +1322,7 @@ async function handleAsk() {
 
       throw new Error(
         data.error ||
-        "Something went wrong while getting the answer. Please try again."
+        "Something went wrong while getting the answer."
       );
 
     }
@@ -1048,7 +1353,7 @@ async function handleAsk() {
     setStatus(
       askStatus,
       error.message ||
-        "Something went wrong while getting the answer. Please try again.",
+      "Something went wrong while getting the answer.",
       "error"
     );
 
@@ -1066,8 +1371,8 @@ async function handleAsk() {
 
 
 /* ============================================================
-   EXPLAIN DIFFICULT LINE
-============================================================ */
+   EXPLAIN
+   ============================================================ */
 
 explainBtn.addEventListener(
   "click",
@@ -1090,6 +1395,7 @@ async function handleExplain() {
     );
 
     return;
+
   }
 
 
@@ -1110,7 +1416,7 @@ async function handleExplain() {
   setStatus(
     explainStatus,
     "Generating explanation...",
-    null
+    ""
   );
 
 
@@ -1150,7 +1456,7 @@ async function handleExplain() {
 
       throw new Error(
         data.error ||
-        "Something went wrong while generating the explanation. Please try again."
+        "Something went wrong while generating the explanation."
       );
 
     }
@@ -1181,7 +1487,7 @@ async function handleExplain() {
     setStatus(
       explainStatus,
       error.message ||
-        "Something went wrong while generating the explanation. Please try again.",
+      "Something went wrong while generating the explanation.",
       "error"
     );
 
