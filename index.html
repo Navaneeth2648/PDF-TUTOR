@@ -27,312 +27,378 @@
           </div>
         </div>
       </div>
+
+      <nav class="header-nav">
+        <a href="#workspaceSection" class="header-nav-link">Workspace</a>
+        <a href="#assistantSection" class="header-nav-link">AI Assistant</a>
+      </nav>
     </div>
   </header>
 
 
   <main class="app-main">
 
-    <!-- ADS SECTION -->
-    <section class="card ads-section">
+    <!-- =========================================================
+         SECTION 1 — PDF WORKSPACE
+         (Subject Units + Upload + Viewer, all together)
+         ========================================================= -->
+    <section class="app-section" id="workspaceSection">
 
-      <div class="ads-header">
+      <div class="app-section-heading">
+        <div class="app-section-icon workspace-icon">📂</div>
         <div>
-          <div class="ads-label">SUBJECT</div>
-
-          <h1 class="ads-title">
-            Advanced Data Structures
-          </h1>
-
-          <p class="ads-subtitle">
-            Advanced Data Structures and Algorithm Analysis
+          <h2 class="app-section-title">PDF Workspace</h2>
+          <p class="app-section-subtitle">
+            Choose a unit or upload your own PDF, then read and select text directly.
           </p>
         </div>
-
-        <div class="created-by">
-          Created by <strong>CHANDANA</strong>
-        </div>
       </div>
 
+      <!-- UNITS -->
+      <section class="card ads-section fade-in-up">
 
-      <div class="unit-list">
-
-        <!-- UNIT 1 -->
-        <button
-          class="unit-card"
-          data-pdf="U1-ADS.pdf"
-          data-name="Advanced Data Structures — Unit I"
-        >
-          <div class="unit-icon">📘</div>
-
-          <div class="unit-info">
-            <div class="unit-number">UNIT I</div>
-            <div class="unit-name">
-              Algorithm Analysis, AVL Trees & Heap Trees
-            </div>
-          </div>
-
-          <div class="unit-arrow">›</div>
-        </button>
-
-
-        <!-- UNIT 2 -->
-        <button
-          class="unit-card"
-          data-pdf="U2-ADS.pdf"
-          data-name="Advanced Data Structures — Unit II"
-        >
-          <div class="unit-icon">📗</div>
-
-          <div class="unit-info">
-            <div class="unit-number">UNIT II</div>
-            <div class="unit-name">
-              Graphs & Divide and Conquer
-            </div>
-          </div>
-
-          <div class="unit-arrow">›</div>
-        </button>
-
-
-        <!-- UNIT 3 -->
-        <button
-          class="unit-card"
-          data-pdf="U3-ADS.pdf"
-          data-name="Advanced Data Structures — Unit III"
-        >
-          <div class="unit-icon">📙</div>
-
-          <div class="unit-info">
-            <div class="unit-number">UNIT III</div>
-            <div class="unit-name">
-              Greedy Method & Dynamic Programming
-            </div>
-          </div>
-
-          <div class="unit-arrow">›</div>
-        </button>
-
-
-        <!-- UNIT 4 -->
-        <button
-          class="unit-card"
-          data-pdf="U4-ADS.pdf"
-          data-name="Advanced Data Structures — Unit IV"
-        >
-          <div class="unit-icon">📕</div>
-
-          <div class="unit-info">
-            <div class="unit-number">UNIT IV</div>
-            <div class="unit-name">
-              Backtracking & Branch and Bound
-            </div>
-          </div>
-
-          <div class="unit-arrow">›</div>
-        </button>
-
-
-        <!-- UNIT 5 -->
-        <button
-          class="unit-card"
-          data-pdf="U5-ADS.pdf"
-          data-name="Advanced Data Structures — Unit V"
-        >
-          <div class="unit-icon">📓</div>
-
-          <div class="unit-info">
-            <div class="unit-number">UNIT V</div>
-            <div class="unit-name">
-              NP Hard & NP Complete Problems
-            </div>
-          </div>
-
-          <div class="unit-arrow">›</div>
-        </button>
-
-      </div>
-
-      <p class="unit-hint">
-        Tap any unit to load the PDF into PDF Tutor.
-      </p>
-
-    </section>
-
-
-    <!-- UPLOAD SECTION -->
-    <section class="card">
-
-      <div class="section-heading">
-        <span class="section-icon">📄</span>
-        Upload your PDF
-      </div>
-
-      <p class="section-desc">
-        Upload another document and ask questions about its content.
-      </p>
-
-
-      <div class="upload-area" id="uploadArea">
-
-        <label class="btn btn-primary upload-button" for="pdfInput">
-          Choose PDF
-        </label>
-
-        <input
-          type="file"
-          id="pdfInput"
-          accept="application/pdf"
-          hidden
-        />
-
-      </div>
-
-
-      <div class="file-info" id="fileInfo" hidden>
-
-        <div class="file-details">
-
-          <div class="file-name" id="fileName"></div>
-
-          <div class="file-size" id="fileSize"></div>
-
-          <div class="file-status" id="fileStatus"></div>
-
-        </div>
-
-        <button
-          class="btn btn-secondary remove-button"
-          id="removePdfBtn"
-        >
-          Remove
-        </button>
-
-      </div>
-
-    </section>
-
-
-    <!-- DOCUMENT READER -->
-    <section class="card reader-card">
-
-      <div class="section-heading">
-        <span class="section-icon">📖</span>
-        Document
-      </div>
-
-      <p class="section-desc">
-        Read the extracted text from your selected PDF.
-      </p>
-
-      <div class="reader-box" id="readerBox">
-
-        <div class="reader-placeholder">
-          <div class="placeholder-icon">📄</div>
-
+        <div class="ads-header">
           <div>
-            Select one of the ADS units above or upload a PDF.
+            <div class="ads-label">SUBJECT</div>
+
+            <h1 class="ads-title">
+              Advanced Data Structures
+            </h1>
+
+            <p class="ads-subtitle">
+              Advanced Data Structures and Algorithm Analysis
+            </p>
+          </div>
+
+          <div class="created-by">
+            Created by <strong>CHANDANA</strong>
           </div>
         </div>
 
-      </div>
+
+        <div class="unit-list">
+
+          <!-- UNIT 1 -->
+          <button
+            class="unit-card"
+            data-pdf="U1-ADS.pdf"
+            data-name="Advanced Data Structures — Unit I"
+          >
+            <div class="unit-icon">📘</div>
+
+            <div class="unit-info">
+              <div class="unit-number">UNIT I</div>
+              <div class="unit-name">
+                Algorithm Analysis, AVL Trees &amp; Heap Trees
+              </div>
+            </div>
+
+            <div class="unit-arrow">›</div>
+          </button>
 
 
-      <div
-        class="selection-actions"
-        id="selectionActions"
-        hidden
-      >
-        <button
-          class="btn btn-secondary"
-          id="explainSelectionBtn"
+          <!-- UNIT 2 -->
+          <button
+            class="unit-card"
+            data-pdf="U2-ADS.pdf"
+            data-name="Advanced Data Structures — Unit II"
+          >
+            <div class="unit-icon">📗</div>
+
+            <div class="unit-info">
+              <div class="unit-number">UNIT II</div>
+              <div class="unit-name">
+                Graphs &amp; Divide and Conquer
+              </div>
+            </div>
+
+            <div class="unit-arrow">›</div>
+          </button>
+
+
+          <!-- UNIT 3 -->
+          <button
+            class="unit-card"
+            data-pdf="U3-ADS.pdf"
+            data-name="Advanced Data Structures — Unit III"
+          >
+            <div class="unit-icon">📙</div>
+
+            <div class="unit-info">
+              <div class="unit-number">UNIT III</div>
+              <div class="unit-name">
+                Greedy Method &amp; Dynamic Programming
+              </div>
+            </div>
+
+            <div class="unit-arrow">›</div>
+          </button>
+
+
+          <!-- UNIT 4 -->
+          <button
+            class="unit-card"
+            data-pdf="U4-ADS.pdf"
+            data-name="Advanced Data Structures — Unit IV"
+          >
+            <div class="unit-icon">📕</div>
+
+            <div class="unit-info">
+              <div class="unit-number">UNIT IV</div>
+              <div class="unit-name">
+                Backtracking &amp; Branch and Bound
+              </div>
+            </div>
+
+            <div class="unit-arrow">›</div>
+          </button>
+
+
+          <!-- UNIT 5 -->
+          <button
+            class="unit-card"
+            data-pdf="U5-ADS.pdf"
+            data-name="Advanced Data Structures — Unit V"
+          >
+            <div class="unit-icon">📓</div>
+
+            <div class="unit-info">
+              <div class="unit-number">UNIT V</div>
+              <div class="unit-name">
+                NP Hard &amp; NP Complete Problems
+              </div>
+            </div>
+
+            <div class="unit-arrow">›</div>
+          </button>
+
+        </div>
+
+        <p class="unit-hint">
+          Tap any unit to load the PDF into PDF Tutor.
+        </p>
+
+      </section>
+
+
+      <!-- UPLOAD -->
+      <section class="card fade-in-up">
+
+        <div class="section-heading">
+          <span class="section-icon">📄</span>
+          Upload your PDF
+        </div>
+
+        <p class="section-desc">
+          Upload another document and ask questions about its content.
+        </p>
+
+
+        <div class="upload-area" id="uploadArea">
+
+          <label class="btn btn-primary upload-button" for="pdfInput">
+            <span class="btn-icon">⬆</span> Choose PDF
+          </label>
+
+          <input
+            type="file"
+            id="pdfInput"
+            accept="application/pdf"
+            hidden
+          />
+
+        </div>
+
+
+        <div class="file-info" id="fileInfo" hidden>
+
+          <div class="file-icon">📄</div>
+
+          <div class="file-details">
+
+            <div class="file-name" id="fileName"></div>
+
+            <div class="file-size" id="fileSize"></div>
+
+            <div class="file-status" id="fileStatus"></div>
+
+          </div>
+
+          <button
+            class="btn btn-secondary remove-button"
+            id="removePdfBtn"
+          >
+            Remove
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- DOCUMENT READER -->
+      <section class="card reader-card fade-in-up">
+
+        <div class="section-heading">
+          <span class="section-icon">📖</span>
+          Document
+        </div>
+
+        <p class="section-desc">
+          Read your PDF below. Click and drag to select text — selections work with
+          the AI assistant underneath.
+        </p>
+
+        <div class="reader-box" id="readerBox">
+
+          <div class="reader-placeholder">
+            <div class="placeholder-icon">📄</div>
+
+            <div>
+              Select one of the ADS units above or upload a PDF.
+            </div>
+          </div>
+
+        </div>
+
+
+        <div
+          class="selection-actions"
+          id="selectionActions"
+          hidden
         >
-          Explain selected text
-        </button>
-      </div>
+          <span class="selection-hint">Text selected</span>
+          <button
+            class="btn btn-secondary"
+            id="explainSelectionBtn"
+          >
+            💡 Explain selected text
+          </button>
+        </div>
+
+      </section>
 
     </section>
 
 
-    <!-- AI SECTION -->
-    <section class="ai-section">
+    <!-- =========================================================
+         SECTION 2 — AI LEARNING ASSISTANT
+         (Ask + Explain, fully separate from the workspace)
+         ========================================================= -->
+    <section class="app-section assistant-app-section" id="assistantSection">
 
-      <!-- ASK -->
-      <div class="card">
-
-        <div class="section-heading">
-          <span class="section-icon">🤖</span>
-          Ask about this PDF
+      <div class="app-section-heading">
+        <div class="app-section-icon assistant-icon">🤖</div>
+        <div>
+          <h2 class="app-section-title">AI Learning Assistant</h2>
+          <p class="app-section-subtitle">
+            Ask questions or get plain-language explanations, grounded in your document.
+          </p>
         </div>
-
-        <p class="section-desc">
-          Ask a question about the content of your selected document.
-        </p>
-
-        <textarea
-          id="questionInput"
-          class="text-input"
-          rows="3"
-          placeholder="Example: What is an AVL tree?"
-        ></textarea>
-
-        <button
-          class="btn btn-primary action-button"
-          id="askBtn"
-        >
-          Ask
-        </button>
-
-        <div
-          class="status-text"
-          id="askStatus"
-        ></div>
-
-        <div
-          class="answer-box"
-          id="answerBox"
-          hidden
-        ></div>
-
       </div>
 
+      <div class="ai-section">
 
-      <!-- EXPLAIN -->
-      <div class="card">
+        <!-- ASK -->
+        <div class="card ai-card fade-in-up">
 
-        <div class="section-heading">
-          <span class="section-icon">💡</span>
-          Explain a difficult line
+          <div class="section-heading">
+            <span class="section-icon ai-badge">💬</span>
+            Ask about this PDF
+          </div>
+
+          <p class="section-desc">
+            Ask a question about the content of your selected document.
+          </p>
+
+          <div class="textarea-wrap">
+            <textarea
+              id="questionInput"
+              class="text-input"
+              rows="3"
+              maxlength="600"
+              placeholder="Example: What is an AVL tree?"
+            ></textarea>
+            <div class="char-counter" id="questionCharCounter">0 / 600</div>
+          </div>
+
+          <button
+            class="btn btn-primary action-button"
+            id="askBtn"
+          >
+            <span class="btn-label">Ask</span>
+            <span class="btn-spinner" hidden></span>
+          </button>
+
+          <div
+            class="status-text"
+            id="askStatus"
+          ></div>
+
+          <div
+            class="answer-box"
+            id="answerBox"
+            hidden
+          ></div>
+
         </div>
 
-        <p class="section-desc">
-          Paste a sentence from your PDF and get a simple explanation.
-        </p>
 
-        <textarea
-          id="explainInput"
-          class="text-input"
-          rows="3"
-          placeholder="Paste a confusing sentence here..."
-        ></textarea>
+        <!-- EXPLAIN -->
+        <div class="card ai-card fade-in-up">
 
-        <button
-          class="btn btn-primary action-button"
-          id="explainBtn"
-        >
-          Explain
-        </button>
+          <div class="section-heading">
+            <span class="section-icon ai-badge">💡</span>
+            Explain a difficult line
+          </div>
 
-        <div
-          class="status-text"
-          id="explainStatus"
-        ></div>
+          <p class="section-desc">
+            Paste a sentence from your PDF — or select text above — and get a simple explanation.
+          </p>
 
-        <div
-          class="answer-box"
-          id="explanationBox"
-          hidden
-        ></div>
+          <div
+            class="selected-preview"
+            id="explainPreview"
+            hidden
+          >
+            <div class="selected-preview-label">Selected text</div>
+            <div class="selected-preview-text" id="explainPreviewText"></div>
+            <button type="button" class="selected-preview-clear" id="explainPreviewClear">
+              Clear
+            </button>
+          </div>
+
+          <div class="textarea-wrap">
+            <textarea
+              id="explainInput"
+              class="text-input"
+              rows="3"
+              maxlength="600"
+              placeholder="Paste a confusing sentence here..."
+            ></textarea>
+            <div class="char-counter" id="explainCharCounter">0 / 600</div>
+          </div>
+
+          <button
+            class="btn btn-primary action-button"
+            id="explainBtn"
+          >
+            <span class="btn-label">Explain</span>
+            <span class="btn-spinner" hidden></span>
+          </button>
+
+          <div
+            class="status-text"
+            id="explainStatus"
+          ></div>
+
+          <div
+            class="answer-box"
+            id="explanationBox"
+            hidden
+          ></div>
+
+        </div>
 
       </div>
 
