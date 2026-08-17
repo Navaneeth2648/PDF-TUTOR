@@ -7,31 +7,30 @@
     content="width=device-width, initial-scale=1.0, maximum-scale=1"
   />
 
-  <title>PDF Tutor — AI Assistant</title>
+  <title>PDF Tutor</title>
 
   <link rel="stylesheet" href="style.css" />
 </head>
 
-<body data-page="assistant">
+<body>
 
   <!-- HEADER -->
   <header class="app-header">
     <div class="header-inner">
       <div class="brand">
-        <div class="brand-icon">🤖</div>
+        <div class="brand-icon">📚</div>
 
         <div>
           <div class="brand-title">PDF Tutor</div>
           <div class="brand-subtitle">
-            AI Learning Assistant
+            Learn smarter from your documents
           </div>
         </div>
       </div>
 
       <nav class="header-nav">
-        <a href="index.html" class="header-nav-link">
-          ← Back to Workspace
-        </a>
+        <a href="#workspaceSection" class="header-nav-link">Workspace</a>
+        <a href="#assistantSection" class="header-nav-link">AI Assistant</a>
       </nav>
     </div>
   </header>
@@ -40,7 +39,251 @@
   <main class="app-main">
 
     <!-- =========================================================
-         SECTION — AI LEARNING ASSISTANT
+         SECTION 1 — PDF WORKSPACE
+         (Subject Units + Upload + Viewer, all together)
+         ========================================================= -->
+    <section class="app-section" id="workspaceSection">
+
+      <div class="app-section-heading">
+        <div class="app-section-icon workspace-icon">📂</div>
+        <div>
+          <h2 class="app-section-title">PDF Workspace</h2>
+          <p class="app-section-subtitle">
+            Choose a unit or upload your own PDF, then read and select text directly.
+          </p>
+        </div>
+      </div>
+
+      <!-- UNITS -->
+      <section class="card ads-section fade-in-up">
+
+        <div class="ads-header">
+          <div>
+            <div class="ads-label">SUBJECT</div>
+
+            <h1 class="ads-title">
+              Advanced Data Structures
+            </h1>
+
+            <p class="ads-subtitle">
+              Advanced Data Structures and Algorithm Analysis
+            </p>
+          </div>
+
+          <div class="created-by">
+            Created by <strong>CHANDANA</strong>
+          </div>
+        </div>
+
+
+        <div class="unit-list">
+
+          <!-- UNIT 1 -->
+          <button
+            class="unit-card"
+            data-pdf="U1-ADS.pdf"
+            data-name="Advanced Data Structures — Unit I"
+          >
+            <div class="unit-icon">📘</div>
+
+            <div class="unit-info">
+              <div class="unit-number">UNIT I</div>
+              <div class="unit-name">
+                Algorithm Analysis, AVL Trees &amp; Heap Trees
+              </div>
+            </div>
+
+            <div class="unit-arrow">›</div>
+          </button>
+
+
+          <!-- UNIT 2 -->
+          <button
+            class="unit-card"
+            data-pdf="U2-ADS.pdf"
+            data-name="Advanced Data Structures — Unit II"
+          >
+            <div class="unit-icon">📗</div>
+
+            <div class="unit-info">
+              <div class="unit-number">UNIT II</div>
+              <div class="unit-name">
+                Graphs &amp; Divide and Conquer
+              </div>
+            </div>
+
+            <div class="unit-arrow">›</div>
+          </button>
+
+
+          <!-- UNIT 3 -->
+          <button
+            class="unit-card"
+            data-pdf="U3-ADS.pdf"
+            data-name="Advanced Data Structures — Unit III"
+          >
+            <div class="unit-icon">📙</div>
+
+            <div class="unit-info">
+              <div class="unit-number">UNIT III</div>
+              <div class="unit-name">
+                Greedy Method &amp; Dynamic Programming
+              </div>
+            </div>
+
+            <div class="unit-arrow">›</div>
+          </button>
+
+
+          <!-- UNIT 4 -->
+          <button
+            class="unit-card"
+            data-pdf="U4-ADS.pdf"
+            data-name="Advanced Data Structures — Unit IV"
+          >
+            <div class="unit-icon">📕</div>
+
+            <div class="unit-info">
+              <div class="unit-number">UNIT IV</div>
+              <div class="unit-name">
+                Backtracking &amp; Branch and Bound
+              </div>
+            </div>
+
+            <div class="unit-arrow">›</div>
+          </button>
+
+
+          <!-- UNIT 5 -->
+          <button
+            class="unit-card"
+            data-pdf="U5-ADS.pdf"
+            data-name="Advanced Data Structures — Unit V"
+          >
+            <div class="unit-icon">📓</div>
+
+            <div class="unit-info">
+              <div class="unit-number">UNIT V</div>
+              <div class="unit-name">
+                NP Hard &amp; NP Complete Problems
+              </div>
+            </div>
+
+            <div class="unit-arrow">›</div>
+          </button>
+
+        </div>
+
+        <p class="unit-hint">
+          Tap any unit to load the PDF into PDF Tutor.
+        </p>
+
+      </section>
+
+
+      <!-- UPLOAD -->
+      <section class="card fade-in-up">
+
+        <div class="section-heading">
+          <span class="section-icon">📄</span>
+          Upload your PDF
+        </div>
+
+        <p class="section-desc">
+          Upload another document and ask questions about its content.
+        </p>
+
+
+        <div class="upload-area" id="uploadArea">
+
+          <label class="btn btn-primary upload-button" for="pdfInput">
+            <span class="btn-icon">⬆</span> Choose PDF
+          </label>
+
+          <input
+            type="file"
+            id="pdfInput"
+            accept="application/pdf"
+            hidden
+          />
+
+        </div>
+
+
+        <div class="file-info" id="fileInfo" hidden>
+
+          <div class="file-icon">📄</div>
+
+          <div class="file-details">
+
+            <div class="file-name" id="fileName"></div>
+
+            <div class="file-size" id="fileSize"></div>
+
+            <div class="file-status" id="fileStatus"></div>
+
+          </div>
+
+          <button
+            class="btn btn-secondary remove-button"
+            id="removePdfBtn"
+          >
+            Remove
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- DOCUMENT READER -->
+      <section class="card reader-card fade-in-up">
+
+        <div class="section-heading">
+          <span class="section-icon">📖</span>
+          Document
+        </div>
+
+        <p class="section-desc">
+          Read your PDF below. Click and drag to select text — selections work with
+          the AI assistant underneath.
+        </p>
+
+        <div class="reader-box" id="readerBox">
+
+          <div class="reader-placeholder">
+            <div class="placeholder-icon">📄</div>
+
+            <div>
+              Select one of the ADS units above or upload a PDF.
+            </div>
+          </div>
+
+        </div>
+
+
+        <div
+          class="selection-actions"
+          id="selectionActions"
+          hidden
+        >
+          <span class="selection-hint">Text selected</span>
+          <button
+            class="btn btn-secondary"
+            id="explainSelectionBtn"
+          >
+            💡 Explain selected text
+          </button>
+        </div>
+
+      </section>
+
+    </section>
+
+
+    <!-- =========================================================
+         SECTION 2 — AI LEARNING ASSISTANT
+         (Ask + Explain, fully separate from the workspace)
          ========================================================= -->
     <section class="app-section assistant-app-section" id="assistantSection">
 
@@ -53,36 +296,6 @@
           </p>
         </div>
       </div>
-
-      <!-- ACTIVE PDF STATUS -->
-      <div class="card active-pdf-card fade-in-up" id="activePdfCard">
-
-        <div class="active-pdf-row" id="activePdfLoaded" hidden>
-          <div class="active-pdf-icon">📄</div>
-          <div class="active-pdf-info">
-            <div class="active-pdf-label">Currently studying</div>
-            <div class="active-pdf-name" id="activePdfName"></div>
-          </div>
-          <a href="index.html" class="btn btn-secondary active-pdf-change">
-            Change PDF
-          </a>
-        </div>
-
-        <div class="active-pdf-row active-pdf-empty" id="activePdfEmpty" hidden>
-          <div class="active-pdf-icon">⚠️</div>
-          <div class="active-pdf-info">
-            <div class="active-pdf-label">No PDF loaded yet</div>
-            <div class="active-pdf-name">
-              Go to the Workspace to select a unit or upload a PDF.
-            </div>
-          </div>
-          <a href="index.html" class="btn btn-primary active-pdf-change">
-            Open Workspace
-          </a>
-        </div>
-
-      </div>
-
 
       <div class="ai-section">
 
@@ -140,7 +353,7 @@
           </div>
 
           <p class="section-desc">
-            Paste a sentence from your PDF — or select text in the Workspace — and get a simple explanation.
+            Paste a sentence from your PDF — or select text above — and get a simple explanation.
           </p>
 
           <div
@@ -201,7 +414,10 @@
   </footer>
 
 
-  <!-- YOUR APP (no pdf.js needed here — PDF context comes from localStorage) -->
+  <!-- PDF.JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <!-- YOUR APP -->
   <script src="app.js"></script>
 
 </body>
