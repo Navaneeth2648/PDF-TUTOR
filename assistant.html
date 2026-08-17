@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>PDF Tutor — AI Assistant</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="assistant">
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-icon">📚</div>
+        <div>
+          <div class="brand-title">PDF Tutor</div>
+          <div class="brand-subtitle">Learn smarter from your documents</div>
+        </div>
+      </div>
+      <nav class="header-nav">
+        <a href="index.html" class="header-nav-link">Back to Workspace</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="app-section assistant-app-section" id="assistantSection">
+      <div class="app-section-heading">
+        <div class="app-section-icon assistant-icon">🤖</div>
+        <div>
+          <h2 class="app-section-title">AI Learning Assistant</h2>
+          <p class="app-section-subtitle">Ask questions or get plain-language explanations, grounded in your document.</p>
+        </div>
+      </div>
+      <div class="ai-section">
+        <div class="card ai-card fade-in-up">
+          <div class="section-heading"><span class="section-icon ai-badge">💬</span>Ask about this PDF</div>
+          <p class="section-desc">Ask a question about the content of your selected document.</p>
+          <div class="textarea-wrap">
+            <textarea id="questionInput" class="text-input" rows="3" maxlength="600" placeholder="Example: What is an AVL tree?"></textarea>
+            <div class="char-counter" id="questionCharCounter">0 / 600</div>
+          </div>
+          <button class="btn btn-primary action-button" id="askBtn"><span class="btn-label">Ask</span><span class="btn-spinner" hidden></span></button>
+          <div class="status-text" id="askStatus"></div>
+          <div class="answer-box" id="answerBox" hidden></div>
+        </div>
+
+        <div class="card ai-card fade-in-up">
+          <div class="section-heading"><span class="section-icon ai-badge">💡</span>Explain a difficult line</div>
+          <p class="section-desc">Paste a sentence from your PDF — or select text above — and get a simple explanation.</p>
+          <div class="selected-preview" id="explainPreview" hidden>
+            <div class="selected-preview-label">Selected text</div>
+            <div class="selected-preview-text" id="explainPreviewText"></div>
+            <button type="button" class="selected-preview-clear" id="explainPreviewClear">Clear</button>
+          </div>
+          <div class="textarea-wrap">
+            <textarea id="explainInput" class="text-input" rows="3" maxlength="600" placeholder="Paste a confusing sentence here..."></textarea>
+            <div class="char-counter" id="explainCharCounter">0 / 600</div>
+          </div>
+          <button class="btn btn-primary action-button" id="explainBtn"><span class="btn-label">Explain</span><span class="btn-spinner" hidden></span></button>
+          <div class="status-text" id="explainStatus"></div>
+          <div class="answer-box" id="explanationBox" hidden></div>
+        </div>
+      </div>
+    </section>
