@@ -48,6 +48,8 @@ const askStatus =
   document.getElementById("askStatus");
 const answerBox =
   document.getElementById("answerBox");
+const questionCharCounter =
+  document.getElementById("questionCharCounter");
 
 const explainInput =
   document.getElementById("explainInput");
@@ -57,6 +59,15 @@ const explainStatus =
   document.getElementById("explainStatus");
 const explanationBox =
   document.getElementById("explanationBox");
+const explainCharCounter =
+  document.getElementById("explainCharCounter");
+
+const explainPreview =
+  document.getElementById("explainPreview");
+const explainPreviewText =
+  document.getElementById("explainPreviewText");
+const explainPreviewClear =
+  document.getElementById("explainPreviewClear");
 
 
 /* ============================================================
@@ -124,6 +135,46 @@ function setFileStatus(message, type = "") {
     fileStatusEl.classList.add(type);
   }
 }
+
+
+function setButtonLoading(button, loading) {
+
+  const label = button.querySelector(".btn-label");
+  const spinner = button.querySelector(".btn-spinner");
+
+  button.disabled = loading;
+
+  if (spinner) {
+    spinner.hidden = !loading;
+  }
+
+  if (label) {
+    label.style.opacity = loading ? "0.7" : "1";
+  }
+
+}
+
+
+function setupCharCounter(textarea, counter) {
+
+  if (!textarea || !counter) {
+    return;
+  }
+
+  const max = textarea.getAttribute("maxlength") || "";
+
+  const update = () => {
+    counter.textContent = `${textarea.value.length} / ${max}`;
+  };
+
+  textarea.addEventListener("input", update);
+
+  update();
+
+}
+
+setupCharCounter(questionInput, questionCharCounter);
+setupCharCounter(explainInput, explainCharCounter);
 
 
 /* ============================================================
@@ -283,7 +334,24 @@ function getRelevantContext(
 
 /* ============================================================
    AI RESPONSE FORMATTER
+   (supports paragraphs, bullet/numbered lists, ### headings,
+    **bold**, `inline code`, and ``` code blocks)
    ============================================================ */
+
+function renderInline(text) {
+
+  // Escape HTML first, then re-apply light markdown formatting.
+  const escaped = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  return escaped
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+
+}
+
 
 function renderFormattedText(
   container,
@@ -293,10 +361,12 @@ function renderFormattedText(
   container.innerHTML = "";
 
   const lines =
-    text.split("\n");
+    (text || "").split("\n");
 
   let list = null;
   let listType = null;
+  let codeBlock = null;
+  let inCodeBlock = false;
 
 
   function closeList() {
@@ -315,8 +385,47 @@ function renderFormattedText(
 
   lines.forEach(rawLine => {
 
-    const line =
-      rawLine.trim();
+    const line = rawLine.trim();
+
+
+    // Fenced code blocks ```
+    if (line.startsWith("```")) {
+
+      if (!inCodeBlock) {
+
+        closeList();
+
+        inCodeBlock = true;
+
+        codeBlock = document.createElement("pre");
+
+        const codeEl = document.createElement("code");
+
+        codeBlock.appendChild(codeEl);
+
+      } else {
+
+        container.appendChild(codeBlock);
+
+        inCodeBlock = false;
+        codeBlock = null;
+
+      }
+
+      return;
+
+    }
+
+    if (inCodeBlock) {
+
+      const codeEl = codeBlock.querySelector("code");
+
+      codeEl.textContent +=
+        (codeEl.textContent ? "\n" : "") + rawLine;
+
+      return;
+
+    }
 
 
     if (!line) {
@@ -327,6 +436,9 @@ function renderFormattedText(
 
     }
 
+
+    const heading =
+      line.match(/^#{1,3}\s+(.*)/);
 
     const bullet =
       line.match(
@@ -340,7 +452,20 @@ function renderFormattedText(
       );
 
 
-    if (bullet) {
+    if (heading) {
+
+      closeList();
+
+      const h =
+        document.createElement("h3");
+
+      h.innerHTML = renderInline(heading[1]);
+
+      container.appendChild(h);
+
+    }
+
+    else if (bullet) {
 
       if (listType !== "ul") {
 
@@ -361,8 +486,8 @@ function renderFormattedText(
           "li"
         );
 
-      li.textContent =
-        bullet[1];
+      li.innerHTML =
+        renderInline(bullet[1]);
 
       list.appendChild(li);
 
@@ -389,8 +514,8 @@ function renderFormattedText(
           "li"
         );
 
-      li.textContent =
-        numbered[1];
+      li.innerHTML =
+        renderInline(numbered[1]);
 
       list.appendChild(li);
 
@@ -405,7 +530,7 @@ function renderFormattedText(
           "p"
         );
 
-      p.textContent = line;
+      p.innerHTML = renderInline(line);
 
       container.appendChild(p);
 
@@ -415,6 +540,11 @@ function renderFormattedText(
 
 
   closeList();
+
+  if (inCodeBlock && codeBlock) {
+    container.appendChild(codeBlock);
+  }
+
 }
 
 
@@ -434,6 +564,7 @@ function createPdfViewer() {
           type="button"
           class="pdf-tool-btn"
           id="pdfZoomOut"
+          aria-label="Zoom out"
         >
           −
         </button>
@@ -449,16 +580,27 @@ function createPdfViewer() {
           type="button"
           class="pdf-tool-btn"
           id="pdfZoomIn"
+          aria-label="Zoom in"
         >
           +
         </button>
+
+        <div class="pdf-toolbar-divider"></div>
 
         <button
           type="button"
           class="pdf-tool-btn pdf-fit-btn"
           id="pdfFitBtn"
         >
-          Fit
+          Fit width
+        </button>
+
+        <button
+          type="button"
+          class="pdf-tool-btn pdf-reset-btn"
+          id="pdfResetBtn"
+        >
+          Reset
         </button>
 
         <span
@@ -493,6 +635,11 @@ function createPdfViewer() {
   const fit =
     document.getElementById(
       "pdfFitBtn"
+    );
+
+  const reset =
+    document.getElementById(
+      "pdfResetBtn"
     );
 
 
@@ -547,11 +694,29 @@ function createPdfViewer() {
     }
   );
 
+
+  reset.addEventListener(
+    "click",
+    () => {
+
+      if (
+        window.currentPdfViewer
+      ) {
+
+        window.currentPdfViewer.setZoom(1);
+
+      }
+
+    }
+  );
+
 }
 
 
 /* ============================================================
    RENDER ACTUAL PDF PAGES
+   (canvas layer + selectable text layer, per PDF.js's
+    recommended two-layer approach)
    ============================================================ */
 
 async function renderPdfViewer(
@@ -605,12 +770,12 @@ async function renderPdfViewer(
 
     fitWidth() {
 
-      const firstPage =
+      const firstStack =
         pagesContainer.querySelector(
-          ".pdf-page-wrapper"
+          ".pdf-page-stack"
         );
 
-      if (!firstPage) {
+      if (!firstStack) {
         return;
       }
 
@@ -618,10 +783,15 @@ async function renderPdfViewer(
         pagesContainer.clientWidth -
         20;
 
-      const pageWidth =
-        firstPage
-          .querySelector("canvas")
-          ?.width || 600;
+      const currentWidth =
+        parseFloat(firstStack.style.width) ||
+        600;
+
+      const currentZoom =
+        this.zoom || 1;
+
+      const baseWidth =
+        currentWidth / currentZoom;
 
       this.zoom =
         Math.max(
@@ -629,7 +799,7 @@ async function renderPdfViewer(
           Math.min(
             2.0,
             availableWidth /
-            pageWidth
+            baseWidth
           )
         );
 
@@ -662,12 +832,6 @@ async function renderPdfViewer(
           );
 
 
-        const baseViewport =
-          page.getViewport({
-            scale: 1
-          });
-
-
         const viewport =
           page.getViewport({
             scale:
@@ -694,6 +858,23 @@ async function renderPdfViewer(
 
         pageLabel.textContent =
           `Page ${pageNumber} of ${pdf.numPages}`;
+
+
+        // Stack holds the canvas (pixels) and the text layer
+        // (invisible, selectable text) on top of each other.
+        const stack =
+          document.createElement(
+            "div"
+          );
+
+        stack.className =
+          "pdf-page-stack";
+
+        stack.style.width =
+          `${viewport.width}px`;
+
+        stack.style.height =
+          `${viewport.height}px`;
 
 
         const canvas =
@@ -727,13 +908,6 @@ async function renderPdfViewer(
           );
 
 
-        canvas.style.width =
-          `${viewport.width}px`;
-
-        canvas.style.height =
-          `${viewport.height}px`;
-
-
         context.setTransform(
           outputScale,
           0,
@@ -744,12 +918,33 @@ async function renderPdfViewer(
         );
 
 
+        // Text layer: rendered from the page's real text
+        // content, positioned exactly over the canvas so the
+        // user can drag-select and copy real text.
+        const textLayerDiv =
+          document.createElement(
+            "div"
+          );
+
+        textLayerDiv.className =
+          "textLayer";
+
+        textLayerDiv.style.width =
+          `${viewport.width}px`;
+
+        textLayerDiv.style.height =
+          `${viewport.height}px`;
+
+
+        stack.appendChild(canvas);
+        stack.appendChild(textLayerDiv);
+
         wrapper.appendChild(
           pageLabel
         );
 
         wrapper.appendChild(
-          canvas
+          stack
         );
 
         pagesContainer.appendChild(
@@ -763,6 +958,33 @@ async function renderPdfViewer(
 
           viewport
         }).promise;
+
+
+        try {
+
+          const textContent =
+            await page.getTextContent();
+
+          const renderTask =
+            pdfjsLib.renderTextLayer({
+              textContentSource: textContent,
+              container: textLayerDiv,
+              viewport,
+              textDivs: []
+            });
+
+          await renderTask.promise;
+
+        } catch (textLayerError) {
+
+          // Selectable text is a progressive enhancement —
+          // if it fails, the rendered page image still works.
+          console.warn(
+            "Text layer render failed:",
+            textLayerError
+          );
+
+        }
 
       }
 
@@ -923,7 +1145,7 @@ async function loadDefaultPdf(
 
 
     /*
-      1. Render actual PDF pages
+      1. Render actual PDF pages (with selectable text layer)
       2. Extract text separately
       3. Keep text for AI
     */
@@ -1158,6 +1380,8 @@ removePdfBtn.addEventListener(
 
     explanationBox.hidden = true;
 
+    hideExplainPreview();
+
 
     setStatus(
       askStatus,
@@ -1175,29 +1399,61 @@ removePdfBtn.addEventListener(
 
 /* ============================================================
    TEXT SELECTION
+   (mouseup for desktop drag-select, selectionchange as a
+    mobile-friendly fallback for touch/long-press selection)
    ============================================================ */
+
+function handleSelectionUpdate() {
+
+  const selection =
+    window.getSelection();
+
+  const selected =
+    selection.toString().trim();
+
+
+  if (!selected) {
+    return;
+  }
+
+
+  // Only react to selections made inside the document reader.
+  const anchorNode =
+    selection.anchorNode;
+
+  if (
+    !anchorNode ||
+    !readerBox.contains(
+      anchorNode.nodeType === 1
+        ? anchorNode
+        : anchorNode.parentNode
+    )
+  ) {
+    return;
+  }
+
+
+  selectionActions.hidden = false;
+
+  selectionActions.dataset.selectedText =
+    selected;
+
+}
+
 
 readerBox.addEventListener(
   "mouseup",
+  handleSelectionUpdate
+);
+
+readerBox.addEventListener(
+  "touchend",
   () => {
-
-    const selected =
-      window
-        .getSelection()
-        .toString()
-        .trim();
-
-
-    if (selected) {
-
-      selectionActions.hidden =
-        false;
-
-      selectionActions.dataset.selectedText =
-        selected;
-
-    }
-
+    // Give the browser a moment to finalize the touch selection.
+    setTimeout(
+      handleSelectionUpdate,
+      120
+    );
   }
 );
 
@@ -1211,17 +1467,68 @@ explainSelectionBtn.addEventListener(
       "";
 
 
-    explainInput.value =
-      selected;
+    showExplainPreview(selected);
 
 
     explainInput.focus();
 
 
-    explainInput.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
+    document
+      .getElementById(
+        "assistantSection"
+      )
+      .scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+  }
+);
+
+
+/* ============================================================
+   SELECTED-TEXT PREVIEW (Explain card)
+   ============================================================ */
+
+function showExplainPreview(text) {
+
+  if (!text) {
+    return;
+  }
+
+  explainInput.value = text;
+
+  explainCharCounter.textContent =
+    `${explainInput.value.length} / ${explainInput.getAttribute("maxlength")}`;
+
+  explainPreviewText.textContent = text;
+
+  explainPreview.hidden = false;
+
+}
+
+
+function hideExplainPreview() {
+
+  explainPreview.hidden = true;
+
+  explainPreviewText.textContent = "";
+
+}
+
+
+explainPreviewClear.addEventListener(
+  "click",
+  () => {
+
+    hideExplainPreview();
+
+    explainInput.value = "";
+
+    explainCharCounter.textContent =
+      `0 / ${explainInput.getAttribute("maxlength")}`;
+
+    explainInput.focus();
 
   }
 );
@@ -1277,7 +1584,7 @@ async function handleAsk() {
 
   state.isAsking = true;
 
-  askBtn.disabled = true;
+  setButtonLoading(askBtn, true);
 
 
   setStatus(
@@ -1363,7 +1670,7 @@ async function handleAsk() {
 
     state.isAsking = false;
 
-    askBtn.disabled = false;
+    setButtonLoading(askBtn, false);
 
   }
 
@@ -1410,7 +1717,7 @@ async function handleExplain() {
 
   state.isExplaining = true;
 
-  explainBtn.disabled = true;
+  setButtonLoading(explainBtn, true);
 
 
   setStatus(
@@ -1497,7 +1804,7 @@ async function handleExplain() {
 
     state.isExplaining = false;
 
-    explainBtn.disabled = false;
+    setButtonLoading(explainBtn, false);
 
   }
 
