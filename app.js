@@ -1,10 +1,37 @@
 /* ============================================================
    PDF TUTOR
    PDF VIEWER + AI
+   (shared across index.html and assistant.html — every element
+    lookup is guarded, since each page only has half the DOM)
    ============================================================ */
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+if (typeof pdfjsLib !== "undefined") {
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+}
+
+
+/* ============================================================
+   CURRENT PAGE
+   ============================================================ */
+
+const CURRENT_PAGE =
+  document.body.dataset.page || "workspace";
+
+
+/* ============================================================
+   LOCAL STORAGE KEYS
+   (used to share PDF context between index.html and
+    assistant.html)
+   ============================================================ */
+
+const LS_FILE_NAME = "pdftutor:fileName";
+const LS_FILE_SIZE = "pdftutor:fileSize";
+const LS_PDF_TEXT = "pdftutor:pdfText";
+const LS_CHUNKS = "pdftutor:chunks";
+const LS_PENDING_EXPLAIN = "pdftutor:pendingExplain";
 
 
 /* ============================================================
@@ -24,6 +51,8 @@ const state = {
 
 /* ============================================================
    ELEMENTS
+   (any of these may be null depending on the current page —
+    every usage below is guarded)
    ============================================================ */
 
 const pdfInput = document.getElementById("pdfInput");
@@ -69,6 +98,13 @@ const explainPreviewText =
 const explainPreviewClear =
   document.getElementById("explainPreviewClear");
 
+const activePdfLoaded =
+  document.getElementById("activePdfLoaded");
+const activePdfEmpty =
+  document.getElementById("activePdfEmpty");
+const activePdfName =
+  document.getElementById("activePdfName");
+
 
 /* ============================================================
    UNIT BUTTONS
@@ -112,6 +148,10 @@ function formatFileSize(bytes) {
 
 function setStatus(element, message, type = "") {
 
+  if (!element) {
+    return;
+  }
+
   element.textContent = message || "";
 
   element.classList.remove("error");
@@ -123,6 +163,10 @@ function setStatus(element, message, type = "") {
 
 
 function setFileStatus(message, type = "") {
+
+  if (!fileStatusEl) {
+    return;
+  }
 
   fileStatusEl.textContent = message || "";
 
@@ -138,6 +182,10 @@ function setFileStatus(message, type = "") {
 
 
 function setButtonLoading(button, loading) {
+
+  if (!button) {
+    return;
+  }
 
   const label = button.querySelector(".btn-label");
   const spinner = button.querySelector(".btn-spinner");
@@ -175,6 +223,124 @@ function setupCharCounter(textarea, counter) {
 
 setupCharCounter(questionInput, questionCharCounter);
 setupCharCounter(explainInput, explainCharCounter);
+
+
+/* ============================================================
+   SHARE PDF CONTEXT BETWEEN PAGES (localStorage)
+   ============================================================ */
+
+function saveContextToStorage() {
+
+  try {
+
+    if (state.fileName) {
+      localStorage.setItem(LS_FILE_NAME, state.fileName);
+    } else {
+      localStorage.removeItem(LS_FILE_NAME);
+    }
+
+    if (state.fileSize != null) {
+      localStorage.setItem(LS_FILE_SIZE, String(state.fileSize));
+    } else {
+      localStorage.removeItem(LS_FILE_SIZE);
+    }
+
+    localStorage.setItem(LS_PDF_TEXT, state.pdfText || "");
+
+    localStorage.setItem(
+      LS_CHUNKS,
+      JSON.stringify(state.chunks || [])
+    );
+
+  } catch (storageError) {
+
+    // Storage can fail (private browsing, quota, etc.) —
+    // the AI assistant still works within the same page/session.
+    console.warn(
+      "Could not save PDF context to localStorage:",
+      storageError
+    );
+
+  }
+
+}
+
+
+function clearContextFromStorage() {
+
+  try {
+
+    localStorage.removeItem(LS_FILE_NAME);
+    localStorage.removeItem(LS_FILE_SIZE);
+    localStorage.removeItem(LS_PDF_TEXT);
+    localStorage.removeItem(LS_CHUNKS);
+
+  } catch (storageError) {
+
+    console.warn(
+      "Could not clear PDF context from localStorage:",
+      storageError
+    );
+
+  }
+
+}
+
+
+function loadContextFromStorage() {
+
+  try {
+
+    const fileName = localStorage.getItem(LS_FILE_NAME);
+    const fileSize = localStorage.getItem(LS_FILE_SIZE);
+    const pdfText = localStorage.getItem(LS_PDF_TEXT);
+    const chunksRaw = localStorage.getItem(LS_CHUNKS);
+
+    state.fileName = fileName || null;
+    state.fileSize = fileSize ? Number(fileSize) : null;
+    state.pdfText = pdfText || "";
+
+    try {
+      state.chunks = chunksRaw ? JSON.parse(chunksRaw) : [];
+    } catch (parseError) {
+      state.chunks = [];
+    }
+
+  } catch (storageError) {
+
+    console.warn(
+      "Could not load PDF context from localStorage:",
+      storageError
+    );
+
+  }
+
+}
+
+
+function refreshActivePdfBanner() {
+
+  if (!activePdfLoaded || !activePdfEmpty) {
+    return;
+  }
+
+  if (state.pdfText && state.fileName) {
+
+    activePdfLoaded.hidden = false;
+    activePdfEmpty.hidden = true;
+
+    if (activePdfName) {
+      activePdfName.textContent = state.fileName;
+    }
+
+  } else {
+
+    activePdfLoaded.hidden = true;
+    activePdfEmpty.hidden = false;
+
+  }
+
+}
 
 
 /* ============================================================
@@ -314,6 +480,7 @@ function getRelevantContext(
     result +=
       item.chunk +
       "\n\n";
+
   }
 
 
@@ -920,7 +1087,11 @@ async function renderPdfViewer(
 
         // Text layer: rendered from the page's real text
         // content, positioned exactly over the canvas so the
-        // user can drag-select and copy real text.
+        // user can drag-select and copy real text. The canvas
+        // sits visually underneath and never intercepts
+        // pointer events (see .pdf-page-stack canvas CSS),
+        // so mouse drag-select, right-click copy, Ctrl+C and
+        // mobile long-press selection all hit the text layer.
         const textLayerDiv =
           document.createElement(
             "div"
@@ -934,6 +1105,11 @@ async function renderPdfViewer(
 
         textLayerDiv.style.height =
           `${viewport.height}px`;
+
+        textLayerDiv.style.setProperty(
+          "--scale-factor",
+          String(this.zoom || 1)
+        );
 
 
         stack.appendChild(canvas);
@@ -1167,6 +1343,11 @@ async function loadDefaultPdf(
       );
 
 
+    // Make the PDF text/chunks/name available to the
+    // AI Assistant page.
+    saveContextToStorage();
+
+
     setFileStatus(
       "PDF opened successfully.",
       "success"
@@ -1195,6 +1376,8 @@ async function loadDefaultPdf(
     state.pdfText = "";
 
     state.chunks = [];
+
+    clearContextFromStorage();
 
 
     setFileStatus(
@@ -1233,168 +1416,198 @@ async function loadDefaultPdf(
    NORMAL PDF UPLOAD
    ============================================================ */
 
-pdfInput.addEventListener(
-  "change",
-  async () => {
+if (pdfInput) {
 
-    const file =
-      pdfInput.files[0];
+  pdfInput.addEventListener(
+    "change",
+    async () => {
 
-
-    if (!file) {
-      return;
-    }
+      const file =
+        pdfInput.files[0];
 
 
-    if (
-      file.type !==
-      "application/pdf"
-    ) {
-
-      setFileStatus(
-        "Please select a PDF file.",
-        "error"
-      );
-
-      return;
-    }
+      if (!file) {
+        return;
+      }
 
 
-    try {
+      if (
+        file.type !==
+        "application/pdf"
+      ) {
 
-      uploadArea.hidden = true;
+        setFileStatus(
+          "Please select a PDF file.",
+          "error"
+        );
 
-      fileInfo.hidden = false;
+        return;
+      }
 
 
-      fileNameEl.textContent =
-        file.name;
+      try {
 
-      fileSizeEl.textContent =
-        formatFileSize(
-          file.size
+        uploadArea.hidden = true;
+
+        fileInfo.hidden = false;
+
+
+        fileNameEl.textContent =
+          file.name;
+
+        fileSizeEl.textContent =
+          formatFileSize(
+            file.size
+          );
+
+
+        setFileStatus(
+          "Opening PDF...",
+          ""
         );
 
 
-      setFileStatus(
-        "Opening PDF...",
-        ""
-      );
+        const arrayBuffer =
+          await file.arrayBuffer();
 
 
-      const arrayBuffer =
-        await file.arrayBuffer();
-
-
-      await renderPdfViewer(
-        arrayBuffer.slice(0)
-      );
-
-
-      state.pdfText =
-        await extractPdfText(
+        await renderPdfViewer(
           arrayBuffer.slice(0)
         );
 
 
-      state.chunks =
-        chunkText(
-          state.pdfText
+        state.fileName =
+          file.name;
+
+        state.fileSize =
+          file.size;
+
+
+        state.pdfText =
+          await extractPdfText(
+            arrayBuffer.slice(0)
+          );
+
+
+        state.chunks =
+          chunkText(
+            state.pdfText
+          );
+
+
+        // Make the PDF text/chunks/name available to the
+        // AI Assistant page.
+        saveContextToStorage();
+
+
+        setFileStatus(
+          "PDF opened successfully.",
+          "success"
         );
 
 
-      setFileStatus(
-        "PDF opened successfully.",
-        "success"
-      );
+      }
+
+      catch (error) {
+
+        console.error(error);
 
 
-    }
-
-    catch (error) {
-
-      console.error(error);
-
-
-      setFileStatus(
-        "Could not open this PDF.",
-        "error"
-      );
+        setFileStatus(
+          "Could not open this PDF.",
+          "error"
+        );
 
 
-      state.pdfText = "";
+        state.pdfText = "";
 
-      state.chunks = [];
+        state.chunks = [];
+
+        clearContextFromStorage();
+
+      }
 
     }
+  );
 
-  }
-);
+}
 
 
 /* ============================================================
    REMOVE PDF
    ============================================================ */
 
-removePdfBtn.addEventListener(
-  "click",
-  () => {
+if (removePdfBtn) {
 
-    state.fileName = null;
+  removePdfBtn.addEventListener(
+    "click",
+    () => {
 
-    state.fileSize = null;
+      state.fileName = null;
 
-    state.pdfText = "";
+      state.fileSize = null;
 
-    state.chunks = [];
+      state.pdfText = "";
 
+      state.chunks = [];
 
-    uploadArea.hidden = false;
-
-    fileInfo.hidden = true;
-
-
-    pdfInput.value = "";
+      clearContextFromStorage();
 
 
-    readerBox.innerHTML = `
+      uploadArea.hidden = false;
 
-      <div class="reader-placeholder">
+      fileInfo.hidden = true;
 
-        <div class="placeholder-icon">
-          📄
+
+      pdfInput.value = "";
+
+
+      readerBox.innerHTML = `
+
+        <div class="reader-placeholder">
+
+          <div class="placeholder-icon">
+            📄
+          </div>
+
+          <div>
+            Select an ADS unit above or upload a PDF.
+          </div>
+
         </div>
 
-        <div>
-          Select an ADS unit above or upload a PDF.
-        </div>
-
-      </div>
-
-    `;
+      `;
 
 
-    selectionActions.hidden = true;
+      if (selectionActions) {
+        selectionActions.hidden = true;
+      }
 
-    answerBox.hidden = true;
+      if (answerBox) {
+        answerBox.hidden = true;
+      }
 
-    explanationBox.hidden = true;
+      if (explanationBox) {
+        explanationBox.hidden = true;
+      }
 
-    hideExplainPreview();
+      hideExplainPreview();
 
 
-    setStatus(
-      askStatus,
-      ""
-    );
+      setStatus(
+        askStatus,
+        ""
+      );
 
-    setStatus(
-      explainStatus,
-      ""
-    );
+      setStatus(
+        explainStatus,
+        ""
+      );
 
-  }
-);
+    }
+  );
+
+}
 
 
 /* ============================================================
@@ -1404,6 +1617,10 @@ removePdfBtn.addEventListener(
    ============================================================ */
 
 function handleSelectionUpdate() {
+
+  if (!readerBox || !selectionActions) {
+    return;
+  }
 
   const selection =
     window.getSelection();
@@ -1441,49 +1658,65 @@ function handleSelectionUpdate() {
 }
 
 
-readerBox.addEventListener(
-  "mouseup",
-  handleSelectionUpdate
-);
+if (readerBox) {
 
-readerBox.addEventListener(
-  "touchend",
-  () => {
-    // Give the browser a moment to finalize the touch selection.
-    setTimeout(
-      handleSelectionUpdate,
-      120
-    );
-  }
-);
+  readerBox.addEventListener(
+    "mouseup",
+    handleSelectionUpdate
+  );
 
+  readerBox.addEventListener(
+    "touchend",
+    () => {
+      // Give the browser a moment to finalize the touch selection.
+      setTimeout(
+        handleSelectionUpdate,
+        120
+      );
+    }
+  );
 
-explainSelectionBtn.addEventListener(
-  "click",
-  () => {
-
-    const selected =
-      selectionActions.dataset.selectedText ||
-      "";
+}
 
 
-    showExplainPreview(selected);
+if (explainSelectionBtn) {
 
+  explainSelectionBtn.addEventListener(
+    "click",
+    () => {
 
-    explainInput.focus();
+      const selected =
+        selectionActions.dataset.selectedText ||
+        "";
 
+      if (!selected) {
+        return;
+      }
 
-    document
-      .getElementById(
-        "assistantSection"
-      )
-      .scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
+      // Hand the selected text to the AI Assistant page via
+      // localStorage, then open it — this works across pages.
+      try {
 
-  }
-);
+        localStorage.setItem(
+          LS_PENDING_EXPLAIN,
+          selected
+        );
+
+      } catch (storageError) {
+
+        console.warn(
+          "Could not store pending explain text:",
+          storageError
+        );
+
+      }
+
+      window.location.href = "assistant.html";
+
+    }
+  );
+
+}
 
 
 /* ============================================================
@@ -1492,56 +1725,76 @@ explainSelectionBtn.addEventListener(
 
 function showExplainPreview(text) {
 
-  if (!text) {
+  if (!text || !explainInput) {
     return;
   }
 
   explainInput.value = text;
 
-  explainCharCounter.textContent =
-    `${explainInput.value.length} / ${explainInput.getAttribute("maxlength")}`;
+  if (explainCharCounter) {
 
-  explainPreviewText.textContent = text;
+    explainCharCounter.textContent =
+      `${explainInput.value.length} / ${explainInput.getAttribute("maxlength")}`;
 
-  explainPreview.hidden = false;
+  }
+
+  if (explainPreviewText) {
+    explainPreviewText.textContent = text;
+  }
+
+  if (explainPreview) {
+    explainPreview.hidden = false;
+  }
 
 }
 
 
 function hideExplainPreview() {
 
-  explainPreview.hidden = true;
+  if (explainPreview) {
+    explainPreview.hidden = true;
+  }
 
-  explainPreviewText.textContent = "";
+  if (explainPreviewText) {
+    explainPreviewText.textContent = "";
+  }
 
 }
 
 
-explainPreviewClear.addEventListener(
-  "click",
-  () => {
+if (explainPreviewClear) {
 
-    hideExplainPreview();
+  explainPreviewClear.addEventListener(
+    "click",
+    () => {
 
-    explainInput.value = "";
+      hideExplainPreview();
 
-    explainCharCounter.textContent =
-      `0 / ${explainInput.getAttribute("maxlength")}`;
+      explainInput.value = "";
 
-    explainInput.focus();
+      explainCharCounter.textContent =
+        `0 / ${explainInput.getAttribute("maxlength")}`;
 
-  }
-);
+      explainInput.focus();
+
+    }
+  );
+
+}
 
 
 /* ============================================================
    ASK AI
    ============================================================ */
 
-askBtn.addEventListener(
-  "click",
-  handleAsk
-);
+if (askBtn) {
+
+  askBtn.addEventListener(
+    "click",
+    handleAsk
+  );
+
+}
 
 
 async function handleAsk() {
@@ -1681,10 +1934,14 @@ async function handleAsk() {
    EXPLAIN
    ============================================================ */
 
-explainBtn.addEventListener(
-  "click",
-  handleExplain
-);
+if (explainBtn) {
+
+  explainBtn.addEventListener(
+    "click",
+    handleExplain
+  );
+
+}
 
 
 async function handleExplain() {
@@ -1805,6 +2062,45 @@ async function handleExplain() {
     state.isExplaining = false;
 
     setButtonLoading(explainBtn, false);
+
+  }
+
+}
+
+
+/* ============================================================
+   PAGE INIT
+   ============================================================ */
+
+if (CURRENT_PAGE === "assistant") {
+
+  // Restore whatever PDF was loaded on the Workspace page.
+  loadContextFromStorage();
+
+  refreshActivePdfBanner();
+
+
+  // If the user tapped "Explain selected text" on the
+  // Workspace page, auto-fill the Explain textarea here.
+  try {
+
+    const pending =
+      localStorage.getItem(LS_PENDING_EXPLAIN);
+
+    if (pending) {
+
+      showExplainPreview(pending);
+
+      localStorage.removeItem(LS_PENDING_EXPLAIN);
+
+    }
+
+  } catch (storageError) {
+
+    console.warn(
+      "Could not read pending explain text:",
+      storageError
+    );
 
   }
 
